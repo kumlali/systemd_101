@@ -1,0 +1,11 @@
+[Unit]
+Description=My Test Service
+
+[Service]
+ExecStart=/bin/bash /usr/local/bin/startup.sh case1
+ExecStop=/bin/bash /usr/local/bin/shutdown.sh case1
+#Type=oneshot
+#RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
