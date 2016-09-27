@@ -1,5 +1,62 @@
 # systemd_101
-Sample unit files to understand how systemd works for different cases.
+
+Motivation behind this project is to understand how systemd works for different cases.
+
+While I was trying to configure my service's systemd unit file, I came across a strange(?) behavior: When I issue `sudo systemctl start myservice` command, the service stopped immediately after it had started. I figured out it happened because `ExecStop` was executed after `ExecStart` had been executed. I searched on Google and saw other people questioning why that happened. Mostly, the answers did not work for me. But following articles were very helpful:
+* [freedesktop.org: systemd.service — Service unit configuration](https://www.freedesktop.org/software/systemd/man/systemd.service.html)
+* [On-demand activation of Docker containers with systemd](https://developer.atlassian.com/blog/2015/03/docker-systemd-socket-activation/)
+
+I noticed that the strange(?) behavior (automatic execution of `ExecStop` immediately after `ExecStart` has been executed) had close relation with;
+* whether the process is foreground or background process AND
+* `Type` and `RemainAfterExit` parameters of unit file
+
+Then I decided to create a sample project to better understand how systemd behaves. 
+
+If you would like to run these tests;
+
+* Copy files under `etc/systemd/system` and `usr/local/bin` directories to your host's relevant directories.
+* Execute `chmod +x /usr/local/bin*` 
+* Execute `sudo systemctl enable mytestservice` 
+
+For each test you would like to try;
+
+* Update `/etc/systemd/system/mytestservice.service` file according to the test. For example;  
+    * for Test 1:
+
+    ```
+    [Unit]
+    Description=My Test Service
+
+    [Service]
+    ExecStart=/bin/bash /usr/local/bin/startup.sh case1
+    ExecStop=/bin/bash /usr/local/bin/shutdown.sh case1
+    #Type=oneshot
+    #RemainAfterExit=yes
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+
+    * for Test 7: 
+    ```
+    [Unit]
+    Description=My Test Service
+
+    [Service]
+    ExecStart=/bin/bash /usr/local/bin/startup.sh case2
+    ExecStop=/bin/bash /usr/local/bin/shutdown.sh case2
+    Type=forking
+    #RemainAfterExit=yes
+
+    [Install]
+    WantedBy=multi-user.target
+    ```
+
+* Execute `sudo systemctl daemon-reload` 
+
+Now you can execute `sudo systemctl start mytestservice`,  `sudo systemctl stop mytestservice`, `sudo systemctl status mytestservice` etc.
+
+Here are the results of my own tests.
 
 
 | Test | Case | Type | RemainAfterExit | Result |
